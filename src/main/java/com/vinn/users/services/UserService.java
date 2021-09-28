@@ -49,13 +49,17 @@ public class UserService {
 		
 	}
 	
-	public User updateUser(User user) {
-		if(users.stream().anyMatch(u->u.getUsername().equals(user.getUsername()))){
-			throw new ResponseStatusException(HttpStatus.CONFLICT,String.format("User %s already exist",user.getUsername()));
-		}
-		users.add(user);
-		return user;
+	public User updateUser(User user, String username) {
+		User useToBeUpdated = getUserByUsername(username); 
+		useToBeUpdated.setNickName(user.getNickName());
+		useToBeUpdated.setPassword(user.getPassword());
+		return useToBeUpdated;
 		
+	}
+	
+	public void deleteUser(String username) {
+		User userByUsername = getUserByUsername(username);
+		users.remove(userByUsername);
 	}
 
 

@@ -1,68 +1,47 @@
 package com.vinn.users.services;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.github.javafaker.Faker;
-import com.vinn.users.models.User;
+import com.vinn.users.entities.User;
+import com.vinn.users.repositories.UserRepository;
 
 @Service
 public class UserService {
 
 	@Autowired
-	private Faker faker;
-	
-	private List<User> users = new ArrayList<>(); 
-	
-	@PostConstruct
-	public void init() {
-		for(int i=0;i<100;i++) {
-		users.add(new User(faker.funnyName().name(), faker.name().username(), faker.dragonBall().character()));
-		}
+	private UserRepository userRepository;
+
+	// public List<User> getUsers(){
+	public Page<User> getUsers(int page, int size) {
+		return userRepository.findAll(PageRequest.of(page, size));
+		// return userRepository.findAll();
+
 	}
 
-	public List<User> getUsers() {
-		return users;
+	public List<String> getUsernames() {
+		return userRepository.findUsernames();
+
 	}
-	
+
+	public User getUserById(Integer userId) {
+		return userRepository.findById(userId).orElseThrow(
+				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User %d not found", userId)));
+	}
+
 	public User getUserByUsername(String username) {
-		return users.stream().filter(u->u.getUsername().equals(username)).findAny()
-		.orElseThrow( ()-> new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-				String.format("User %s not found", username)));
-		 
-	}
-	
-	public User createUser(User user) {
-		if(users.stream().anyMatch(u->u.getUsername().equals(user.getUsername()))){
-			throw new ResponseStatusException(HttpStatus.CONFLICT,String.format("User %s already exist",user.getUsername()));
-		}
-		users.add(user);
-		return user;
-		
-	}
-	
-	public User updateUser(User user, String username) {
-		User useToBeUpdated = getUserByUsername(username); 
-		useToBeUpdated.setNickName(user.getNickName());
-		useToBeUpdated.setPassword(user.getPassword());
-		return useToBeUpdated;
-		
-	}
-	
-	public void deleteUser(String username) {
-		User userByUsername = getUserByUsername(username);
-		users.remove(userByUsername);
+		return userRepository.findByUsername(username).orElseThrow(
+				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User %d not found", username)));
 	}
 
+	public User getUserByUsernameAndPassword(String username, String password) {
+		return userRepository.findByUsernameAndPassword(username, password).orElseThrow(
+				() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User %s not found", username)));
+	}
 
-	
-		
 }
